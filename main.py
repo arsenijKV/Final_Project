@@ -5,3 +5,7 @@ from telebot.types import InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeybo
 from telebot import types
 
 bot = TeleBot(TOKEN)
+
+if __name__ == '__main__':
+    manager = DB_Manager(DATABASE)
+    bot.infinity_polling()
