@@ -5,6 +5,7 @@ from telebot.types import InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeybo
 from telebot import types
 
 bot = TeleBot(TOKEN)
+user_quest = {}
 all_questions = {
     "learn": "Где бы ты хотел работать(учиться)?",
     "job_wear": "Какой стиль работы ты предпочетаешь?",
@@ -24,15 +25,10 @@ def send_welcome(message):
 
 
 @bot.message_handler(func=lambda message: message.text == "Да")
-def send_welcome(message):
+def send_welcomes(message):
     markup = InlineKeyboardMarkup()
-    markup.add(InlineKeyboardButton("Где бы ты хотел работать(учиться)?", callback_data="learn"))
-    markup.add(InlineKeyboardButton("Какой стиль работы ты предпочетаешь?", callback_data="job_wear"))
-    markup.add(InlineKeyboardButton("Какие скилы(умения) ты имеешь?", callback_data="skills"))
-    markup.add(InlineKeyboardButton("Где ты раньше учился?", callback_data="internship"))
-    markup.add(InlineKeyboardButton("Что тебе важно в работе?", callback_data="kind"))
-    markup.add(InlineKeyboardButton("Есть ли у тебя любимая сфера?", callback_data="sfera"))
-
+    for key, question in all_questions.items():
+        markup.add(InlineKeyboardButton(question, callback_data=key))
 
     bot.send_message(message.chat.id, "Выбери один из вариантов ниже:", reply_markup=markup) 
 
@@ -40,11 +36,23 @@ def send_welcome(message):
 def learn(call):
     bot.answer_callback_query(call.id)
     bot.send_message(call.message.chat.id, 'Ответь на этот вопрос')
-    bot.register_next_step_handler(call.message, learn_question)
+    bot.register_next_step_handler(call.message.chat.id, learn_question)
 
 def learn_question(message):
     user_text = message.text
-    bot.send_message(message.chat.id, '')
+    answered_key = "learn"
+    remaining_questions = {k: v for k, v in all_questions.items() if k != answered_key}
+    bot.send_message(message.chat.id, 'Спасибо на ответ, отвечай дальше')
+    bot.register_next_step_handler(message, ask_remaining_questions, remaining_questions)
+
+def ask_remaining_questions(message, questions):
+    if not questions:
+        bot.send_message(message.chat.id, "Спасибо, ты ответил на все вопросы!")
+        return
+
+    key, question = questions.popitem()
+    bot.send_message(message.chat.id, question)
+    bot.register_next_step_handler(message, ask_remaining_questions, questions)
 
 
 
