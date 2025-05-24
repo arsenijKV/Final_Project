@@ -5,7 +5,7 @@ from telebot.types import InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeybo
 from telebot import types
 
 bot = TeleBot(TOKEN)
-user_quest = {}
+user_data = {}
 all_questions = {
     "learn": "Где бы ты хотел работать(учиться)?",
     "job_wear": "Какой стиль работы ты предпочетаешь?",
@@ -32,29 +32,32 @@ def send_welcomes(message):
 
     bot.send_message(message.chat.id, "Выбери один из вариантов ниже:", reply_markup=markup) 
 
-@bot.callback_query_handler(func=lambda call: call.data == "learn")
-def learn(call):
+@bot.callback_query_handler(func=lambda call: call.data in all_questions)
+def first(call):
+    key = call.data
     bot.answer_callback_query(call.id)
+    bot.send_message(call.message.chat.id, all_questions[key]) 
     bot.send_message(call.message.chat.id, 'Ответь на этот вопрос')
-    bot.register_next_step_handler(call.message.chat.id, learn_question)
+    bot.register_next_step_handler_by_chat_id(call.message.chat.id, first_answer, key)
 
-def learn_question(message):
-    user_text = message.text
-    answered_key = "learn"
+def first_answer(message, answered_key):
+    user_data[message.chat.id] = {answered_key: message.text}
     remaining_questions = {k: v for k, v in all_questions.items() if k != answered_key}
-    bot.send_message(message.chat.id, 'Спасибо на ответ, отвечай дальше')
-    bot.register_next_step_handler(message, ask_remaining_questions, remaining_questions)
+    ask_next_question(message, remaining_questions)
 
-def ask_remaining_questions(message, questions):
+def ask_next_question(message, questions):
     if not questions:
         bot.send_message(message.chat.id, "Спасибо, ты ответил на все вопросы!")
         return
-
     key, question = questions.popitem()
     bot.send_message(message.chat.id, question)
-    bot.register_next_step_handler(message, ask_remaining_questions, questions)
+    bot.register_next_step_handler_by_chat_id(message.chat.id, handle_next_answer, key, questions)
 
-
+def handle_next_answer(message, key, questions):
+    user_data[message.chat.id][key] = message.text
+    ask_next_question(message, questions)
+   
+    
 
 
 
