@@ -1,2 +1,2 @@
-TOKEN = '7744895548:AAG6aPr4r8utvDRqzd_rmQOYoNEnn8pcsGo'
+TOKEN = ''
 DATABASE = 'profession.db'
